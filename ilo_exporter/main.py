@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import collections
 import hpilo
 import os
 import waitress
@@ -28,21 +29,20 @@ class ILOCollector(object):
         label_values = (self.hostname, self.product_name)
 
         if embedded_health['health_at_a_glance'] is not None:
+            g = GaugeMetricFamily('hpilo_health_at_a_glance',
+                                  'iLO health at a glance status, 0: Unknown, 1: OK, 2: Degraded, 3: Failed.',
+                                  labels=label_names + ('component',))
             for key, value in embedded_health['health_at_a_glance'].items():
-                gauge_name = f'hpilo_health_at_a_glance_{key}'
-                gauge_documentation = f'iLO health at a glance status for {key}, ' \
-                                      '0: Unknown, 1: OK, 2: Degraded, 3: Failed.'
                 status = value['status'].lower()
-                gauge_value = 0
+                metric_value = -1
                 if status == 'ok':
-                    gauge_value = 1
+                    metric_value = 0
                 elif status == 'degraded':
-                    gauge_value = 2
+                    metric_value = 1
                 elif status == 'failed':
-                    gauge_value = 3
-                g = GaugeMetricFamily(gauge_name, gauge_documentation, labels=label_names)
-                g.add_metric(label_values, gauge_value)
-                yield g
+                    metric_value = 2
+                g.add_metric(label_values + (key,), metric_value)
+            yield g
 
         if embedded_health['fans'] is not None:
             g = GaugeMetricFamily('hpilo_fan_speed', 'Fan speed in percentage.',
@@ -54,17 +54,17 @@ class ILOCollector(object):
             yield g
 
         if embedded_health['temperature'] is not None:
+            sensors_by_unit = collections.defaultdict(list)
             for sensor in embedded_health['temperature'].values():
                 if sensor['currentreading'] == 'N/A':
                     continue
-                canonicalized_sensor_name = sensor['label'].lower() \
-                                                           .replace(' ', '_').replace('-', '_').replace('/', '')
-                gauge_name = f'hpilo_temperature_{canonicalized_sensor_name}'
-                gauge_documentation = f'Temperature reading for {sensor["label"]} in {sensor["currentreading"][1]}.'
-                gauge_value = sensor['currentreading'][0]
-                gauge_unit = sensor['currentreading'][1].lower()
-                g = GaugeMetricFamily(gauge_name, gauge_documentation, labels=label_names, unit=gauge_unit)
-                g.add_metric(label_values, gauge_value)
+                reading, unit = sensor['currentreading']
+                sensors_by_unit[unit].append((sensor['label'], reading))
+            for unit in sensors_by_unit:
+                g = GaugeMetricFamily('hpilo_temperature', 'Temperature sensors reading.',
+                                      labels=label_names + ('sensor',), unit=unit.lower())
+                for sensor_name, sensor_reading in sensors_by_unit[unit]:
+                    g.add_metric(label_values + (sensor_name,), sensor_reading)
                 yield g
 
         if embedded_health['power_supply_summary'] is not None:
