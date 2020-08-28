@@ -9,4 +9,4 @@ EXPOSE 9116
 
 COPY ilo_exporter /app/ilo_exporter
 
-CMD main.py
+CMD ./main.py
