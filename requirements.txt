@@ -1,0 +1,4 @@
+flask
+python-hpilo
+prometheus_client
+waitress
