@@ -1,4 +1,4 @@
 flask
-python-hpilo
 prometheus_client
+python-ilorest-library
 waitress
