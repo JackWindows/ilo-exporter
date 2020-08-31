@@ -12,7 +12,6 @@ docker build -t ilo-exporter .
 ```
 docker run --rm \
     -e ILO_HOST=<ip> \
-    -e ILO_PORT=443 \
     -e ILO_USER=exporter \
     -e ILO_PASSWORD=exporter
     -p 9116:9116 \
