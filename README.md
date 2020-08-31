@@ -1,7 +1,7 @@
 # ilo-exporter
 ## Usage
 ```
-ILO_HOST=<ip> ILO_PORT=443 ILO_USER=exporter ILO_PASSWORD=exporter LISTEN_PORT=9116 ilo_exporter/main.py
+ILO_HOST=<ip> ILO_USER=exporter ILO_PASSWORD=exporter LISTEN_PORT=9116 ilo_exporter/main.py
 ```
 ## Run in docker
 1. Build
