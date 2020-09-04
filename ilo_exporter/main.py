@@ -33,7 +33,7 @@ class ILOCollector(object):
             ret = -1
             if status == 'ok':
                 ret = 0
-            elif status == 'degraded':
+            elif status == 'warning':
                 ret = 1
             elif status == 'failed':
                 ret = 2
